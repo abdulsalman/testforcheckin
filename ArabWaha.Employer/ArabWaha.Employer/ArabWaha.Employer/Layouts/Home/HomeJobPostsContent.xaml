@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ContentView xmlns="http://xamarin.com/schemas/2014/forms" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" 
+             xmlns:locals="clr-namespace:ArabWaha.Employer.Controls"
+             x:Class="ArabWaha.Employer.Layouts.HomeJobPostsContent"
+             xmlns:lEx="clr-namespace:ArabWaha.Employer.Helpers"
+             >
+  <ContentView.Content>
+
+        <StackLayout Orientation="Vertical" HorizontalOptions="FillAndExpand" VerticalOptions="Fill" >
+            <Button Text="{lEx:Translate ButtonAddNewPost}" Style="{StaticResource BlueButtonFlat}" Margin="1" Command="{Binding AddNewJobCommand}"  />
+            <ListView x:Name="ParentListView" ItemsSource="{Binding JobPageSource}" 
+                      HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
+                      HasUnevenRows="True" SeparatorVisibility="None" BackgroundColor="{StaticResource GreyPageColor}" ItemSelected="ItemSelected" >
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <!--<locals:HomeJobCustomViewCell />-->
+                        <ViewCell x:Name="myCell" >
+                            <ViewCell.ContextActions>
+                                <MenuItem Text="{lEx:Translate MenuDelete}" BindingContext="{Binding Source={x:Reference ParentListView},Path=BindingContext}"  
+                                      Command="{Binding DeleteJobCommand}"  CommandParameter="{Binding Source={x:Reference myCell}, Path=BindingContext}" 
+                                      IsDestructive="True"  />
+                                <MenuItem Text="{lEx:Translate MenuEdit}" BindingContext="{Binding Source={x:Reference ParentListView},Path=BindingContext}"  
+                                          Command="{Binding EditJobCommand}"  CommandParameter="{Binding Source={x:Reference myCell}, Path=BindingContext}"  />
+                                <MenuItem Text="{lEx:Translate MenuView}" BindingContext="{Binding Source={x:Reference ParentListView},Path=BindingContext}"  
+                                          Command="{Binding ViewJobCommand}"  CommandParameter="{Binding Source={x:Reference myCell}, Path=BindingContext}"  />
+                            </ViewCell.ContextActions>
+                            <StackLayout Padding="10,5,10,5" >
+                                <Grid Margin="2,2,2,2" >
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="10" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition>
+                                            <RowDefinition.Height>
+                                                <OnIdiom x:TypeArguments="GridLength" Tablet="20" Phone="15" />
+                                            </RowDefinition.Height>
+                                        </RowDefinition>
+                                        <RowDefinition>
+                                            <RowDefinition.Height>
+                                                <OnIdiom x:TypeArguments="GridLength" Tablet="20" Phone="15" />
+                                            </RowDefinition.Height>
+                                        </RowDefinition>
+                                        <RowDefinition Height="25" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition>
+                                            <RowDefinition.Height>
+                                                <OnIdiom x:TypeArguments="GridLength" Tablet="Auto" Phone="Auto" />
+                                            </RowDefinition.Height>
+                                        </RowDefinition>
+                                        <RowDefinition Height="10" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="15" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="5" />
+                                    </Grid.ColumnDefinitions>
+                                    <BoxView BackgroundColor="White" Grid.Row="0" Grid.RowSpan="8" Grid.Column="0" Grid.ColumnSpan="5" VerticalOptions="FillAndExpand" />
+
+                                    <Label Text="{Binding JobPostTitle}" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" HorizontalTextAlignment="End" Style="{StaticResource InfoBodyTextBlue}" HorizontalOptions="End" />
+
+                                    <!--<Label Text="{Binding Posted, StringFormat='Posted: {0} Ago'}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource CellBodyTextSmallGray}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding Status, StringFormat='Job Status: {0}'}" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource CellBodyTextSmallGray}" HorizontalOptions="End" HorizontalTextAlignment="End" />-->
+
+                                    <Label Text="{Binding GetPostedInfo}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Style="{StaticResource CellBodyTextMedGray}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding GetJobStatusInfo}" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Style="{StaticResource CellBodyTextMedGray}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+
+
+                                    <Label Text="{lEx:Translate LocationLabel}" Grid.Row="5" Grid.Column="0" Style="{StaticResource HeaderTextSmallBlue}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding CompanyName}" Grid.Row="5" Grid.Column="1" Style="{StaticResource HeaderTextSmallBlue}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+
+                                    <Label Text="{Binding CompanyLocation.LocationId}" Grid.Row="6" Grid.Column="0" Style="{StaticResource CellBodyTextMedGray}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding CompanyIndustry}" Grid.Row="6" Grid.Column="1" Style="{StaticResource CellBodyTextMedGray}" HorizontalOptions="End" HorizontalTextAlignment="End" />
+
+                                    <Frame OutlineColor="Gray" Grid.Row="5" Grid.RowSpan="2" Grid.Column="3"  Padding="0" >
+                                        <Image Source="{Binding CompanyLogo}" WidthRequest="36" HeightRequest="36" Aspect="AspectFit"  />
+                                    </Frame>
+
+
+
+                                </Grid>
+                            </StackLayout>
+
+
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackLayout>
+    </ContentView.Content>
+</ContentView>

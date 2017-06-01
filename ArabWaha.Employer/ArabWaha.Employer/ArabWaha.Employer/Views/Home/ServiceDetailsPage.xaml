@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             xmlns:local="clr-namespace:ArabWaha.Employer.Controls"
+             x:Class="ArabWaha.Employer.Views.Home.ServiceDetailsPage"
+             BackgroundColor="{StaticResource LighGreyPageColor}"
+             Title="{Binding ServiceDetails.ServiceName}"
+             >
+
+    <StackLayout HorizontalOptions="FillAndExpand" VerticalOptions="Fill" Padding="10,10,10,10">
+        <ScrollView BackgroundColor="White">
+        <Grid VerticalOptions="FillAndExpand">
+            <Grid.RowDefinitions>
+                   <RowDefinition Height="10" />
+                   <RowDefinition Height="30" />
+                    <RowDefinition Height="1" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+            </Grid.ColumnDefinitions>
+
+            <BoxView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Grid.RowSpan="5" BackgroundColor="White" />
+            <BoxView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="{StaticResource LightGraySeperatorColor}" />
+
+                <Label Grid.Row="1" Grid.Column="1" Text="{Binding ServiceDetails.ServiceName}" 
+                       HorizontalOptions="FillAndExpand" HorizontalTextAlignment="End" Style="{StaticResource InfoBodyTextBlue}" />
+
+            <Label Grid.Row="3" Grid.Column="1"  Text="{Binding ServiceDetails.Introduction}" 
+                   HorizontalTextAlignment="End" HorizontalOptions="FillAndExpand"
+                   Style="{StaticResource InfoBodyTextExtraSmallBlue}" />
+
+
+            </Grid>
+
+        </ScrollView>
+    </StackLayout>
+</ContentPage>

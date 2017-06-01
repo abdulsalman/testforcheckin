@@ -1,0 +1,2451 @@
+using ArabWaha.Enums;
+using ArabWaha.Models;
+using ArabWaha.Models.JobDetails;
+using ArabWaha.Models.Search;
+using RestSharp.Portable;
+using RestSharp.Portable.HttpClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.IO;
+using System.Net;
+using System.Text.RegularExpressions;
+using ArabWaha.Common;
+using ArabWaha.Helpers;
+using ArabWaha.Web;
+
+namespace ArabWaha.Web
+{
+	public class AWWebClient
+	{
+		private static AWWebClient instance;
+		public static AWWebClient Instance => instance ?? (instance = new AWWebClient());
+
+		//TODO: Dev Configuration
+		private const string HEADER_JSON = "application/json";
+		//private static string baseUrl = "https://172.27.135.13";
+		//private string regServiceUrl = $"{baseUrl}/odata/applications/latest/com.aec.taqat.mobile3/";
+		//private string serviceUrl = $"https://172.27.135.13/com.aec.taqat.mobile3/";
+
+		////TODO: Quality Configuration
+		//private const string HEADER_JSON = "application/json";
+		//private static string baseUrl = "https://10.48.44.150";
+		//private string regServiceUrl = $"{baseUrl}/odata/applications/latest/com.aec.taqat.mobile/";
+		//private string serviceUrl = $"https://10.48.44.150/com.aec.taqat.mobile/";
+
+		//TODO: UAT Configuration
+		//private const string HEADER_JSON = "application/json";
+
+		//private static string baseUrl = "https://putdzr11jbosw01";
+		private static string baseUrl = "http://10.37.37.22:8080";
+		private string regServiceUrl = $"{baseUrl}/odata/applications/latest/com.aec.taqat.mobile3/";
+		private string serviceUrl = $"http://10.37.37.22:8080/com.aec.taqat.mobile3/";
+
+		//private static string baseUrl = "https://172.26.130.13";
+		//private string regServiceUrl = $"{baseUrl}/odata/applications/latest/com.aec.taqat.mobile3/";
+		//private string serviceUrl = $"https://172.26.130.13/com.aec.taqat.mobile3/";
+
+
+		//private static string baseUrl = "https://putdzr11jbosw01";
+		//private static string baseUrl = "http://10.38.42.23:8080";
+		//private string regServiceUrl = $"{baseUrl}/odata/applications/latest/com.aec.taqat.mobile2/";
+		//private string serviceUrl = $"http://10.38.42.23:8080/com.aec.taqat.mobile2/";
+
+		private RestClient client = new RestClient(new Uri($"{baseUrl}/com.aec.taqat.mobile/"));
+		private RestClient localClient = new RestClient(new Uri($"{baseUrl}/odata/applications/latest/com.aec.taqat.mobile/"));
+		//private RestClient likeClient = new RestClient(new Uri("http://arab-waha.staging-like.st/api/"));
+		private RestClient likeClient = new RestClient(new Uri("http://arab-waha.development-like.st/api/"));
+
+		#region likeClient
+		/// <summary>
+		/// Gets the announcements.
+		/// </summary>
+		/// <returns>The announcements.</returns>
+		public async Task<IRestResponse<AnnouncementsRoot>> GetAnnouncements()
+		{
+			var request = new RestRequest("announcements", Method.GET);
+
+			request.AddHeader("Content-Type", "application/json");
+			request.AddHeader("Accept-Language", Constants.AcceptLanguage);
+
+			return await likeClient.Execute<AnnouncementsRoot>(request);
+		}
+
+		public async Task<IRestResponse<ProgramsRoot>> GetPrograms()
+		{
+			var request = new RestRequest("programs", Method.GET);
+
+			request.AddHeader("Content-Type", "application/json");
+			request.AddHeader("Accept-Language", Constants.AcceptLanguage);
+
+			return await likeClient.Execute<ProgramsRoot>(request);
+		}
+
+		#endregion
+
+		#region client
+
+		public async Task<IRestResponse<SearchRoot>> GetSearchdJobsList(string keyword = null, JobTypeEnum jobtype = 0, WorkTimeEnum workTime = 0, ShiftTypeEnum shiftType = 0,
+																		 TravellingRequiredEnum travellingRequired = 0, TeleWorkingEnum teleWorking = 0, int salaryTo = 0,
+																		 int salaryFrom = 0, RequiredEducationEnum requiredEducation = 0, GenderEnum gender = 0, string location = null)
+		{
+			var url = "jobPostingSearchSet";
+
+			var parameters = new Dictionary<string, string>();
+
+			//if (!string.IsNullOrEmpty(DebugDataSingleton.Instance?.NesIndividualID))
+			//    parameters.Add("nesIndividualID", DebugDataSingleton.Instance.NesIndividualID);
+
+			if (!string.IsNullOrEmpty(keyword))
+				parameters.Add("Keyword", $"'{keyword}'");
+
+			if (jobtype > 0)
+				parameters.Add("JobType", $"'{jobtype.ToString()}'");
+
+			if (workTime > 0)
+				parameters.Add("WorkTime", $"'{workTime.ToString()}'");
+
+			if (shiftType > 0)
+				parameters.Add("ShiftType", $"'{(int)shiftType}'");
+
+			if (travellingRequired > 0)
+				parameters.Add("TravellingRequired", $"'{(int)travellingRequired}'");
+
+			if (teleWorking > 0)
+				parameters.Add("TeleWorking", $"'{(int)teleWorking}'");
+
+			if (salaryTo > 0)
+				parameters.Add("SalaryTo", $"'{salaryTo}'");
+
+			if (salaryFrom > 0)
+				parameters.Add("SalaryFrom", $"'{salaryFrom}'");
+
+			if (requiredEducation > 0)
+				parameters.Add("RequiredEducation", $"'{(int)requiredEducation}'");
+
+			if (gender > 0)
+				parameters.Add("Gender", $"'{gender.ToString()}'");
+
+			if (!string.IsNullOrEmpty(location))
+				parameters.Add("location", $"'{location}'");
+
+			var query = ToQueryString(parameters);
+
+			var request = new RestRequest($"{url}{query}", Method.GET);
+
+			return await ExecuteRequest<SearchRoot>(request);
+		}
+
+		public async Task<IRestResponse<JobDetailsRoot>> GetJobDetails(string id)
+		{
+			var url = "getJobDetailsSet";
+
+			var parameters = new Dictionary<string, string>();
+			parameters.Add("jobpostId", $"'{id}'");
+			parameters.Add("language", "'en'");
+
+			var query = ToQueryString(parameters);
+
+			var request = new RestRequest($"{url}{query}", Method.GET);
+
+			return await ExecuteRequest<JobDetailsRoot>(request);
+		}
+
+		private async Task<IRestResponse<T>> ExecuteRequest<T>(RestRequest request)
+		{
+			if (!string.IsNullOrEmpty(DebugDataSingleton.Instance?.ApplicationConnectionId))
+				request.AddHeader("X-SMP-APPCID", DebugDataSingleton.Instance.ApplicationConnectionId);
+
+			request.AddHeader("Accept", "application/json");
+
+			if (!string.IsNullOrEmpty(DebugDataSingleton.Instance?.BasicAuth))
+				request.AddHeader("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+			return await client.Execute<T>(request);
+		}
+
+		private static string ToQueryString(Dictionary<string, string> pairs)
+		{
+			var list = pairs.Select(pair => string.Format("{0} eq {1}", pair.Key, pair.Value)).ToList();
+			return $"?$filter=" + string.Join(" and ", list);
+		}
+
+		#endregion
+
+		//public async Task<IRestResponse<RegistrationObjectRoot>> RegisterUser(string authHeader, string type)
+		//{
+		//    var request = new RestRequest("Connections", Method.POST) { ContentCollectionMode = ContentCollectionMode.BasicContent };
+
+		//    request.AddHeader("Content-Type", "application/json");
+		//    request.AddHeader("Accept", "application/json");
+		//    request.AddHeader("authorization", authHeader);
+
+		//    request.AddBody($"{{ \"DeviceType\": \"{type}\"}} ", Encoding.UTF8);
+
+		//    return await localClient.Execute<RegistrationObjectRoot>(request);
+		//}
+
+		public async Task<ServiceResult<RegistrationObjectRoot>> RegisterUser(string authHeader, string type)
+		{
+			ServiceResult<RegistrationObjectRoot> returnVal = null;
+
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "Connections"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("authorization", authHeader);
+					var requestBody = new DeviceDetail();
+					requestBody.DeviceType = type;
+					var requestJson = JsonConvert.SerializeObject(requestBody);
+					returnVal = new ServiceResult<RegistrationObjectRoot>();
+
+					var response = await httpclient.PostAsync(regServiceUrl + "Connections", new StringContent(requestJson, Encoding.UTF8, HEADER_JSON));
+                    if (response.StatusCode ==System.Net.HttpStatusCode.Created)
+					{
+						// all success
+						var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+						var descontent = JsonConvert.DeserializeObject<RegistrationObjectRoot>(content);
+						returnVal.Result = descontent;
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+				}
+				catch (Exception ex)
+				{
+					//var a = ex;
+					throw ex;
+				}
+
+				return returnVal;
+			}
+		}
+
+		public async Task<ServiceResult<RegistrationObjectRoot>> UnRegisterUser()
+		{
+			ServiceResult<RegistrationObjectRoot> returnVal = null;
+
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "Connections"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("authorization", DebugDataSingleton.Instance.BasicAuth);
+					//httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//var requestBody = new DeviceDetail();
+					//requestBody.DeviceType = type;
+					//var requestJson = JsonConvert.SerializeObject(requestBody);
+					returnVal = new ServiceResult<RegistrationObjectRoot>();
+
+					var parameter = string.Format("Connections('{0}')", DebugDataSingleton.Instance.X_SMP_APPCID);
+
+					var response = await httpclient.DeleteAsync(regServiceUrl + parameter);
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						// all success
+						//var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+						//var descontent = JsonConvert.DeserializeObject<RegistrationObjectRoot>(content);
+						returnVal.Result = null;
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+
+				return returnVal;
+			}
+		}
+
+		public static Task<Stream> GetRequestStreamAsync(WebRequest request)
+		{
+			return Task.Factory.StartNew<Stream>(() =>
+			{
+				var t = Task.Factory.FromAsync<Stream>(
+					request.BeginGetRequestStream,
+					request.EndGetRequestStream,
+					null);
+				t.Wait();
+
+				return t.Result;
+			});
+		}
+		public static Task<WebResponse> GetResponseAsync(WebRequest request)
+		{
+			return Task.Factory.StartNew<WebResponse>(() =>
+				{
+					var t = Task.Factory.FromAsync<WebResponse>(
+						request.BeginGetResponse,
+						request.EndGetResponse,
+						null);
+
+					t.Wait();
+
+					return t.Result;
+				});
+		}
+
+		public static async Task<string> MakePostRequest(string url, string data, bool isBatch = false)
+		{
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+			if (!isBatch)
+			{
+				request.ContentType = "application/json; charset=utf-8";
+				request.Accept = "application/json, text/javascript, */*; q=0.01";
+			}
+			else
+			{
+				request.ContentType = "multipart/mixed;boundary=batch";
+				request.Accept = "multipart/mixed;boundary=batch, text/javascript, */*; q=0.01";
+			}
+			request.Method = "POST";
+			request.Headers["Cookie"] = DebugDataSingleton.Instance.COOKIE;
+			//request.Headers["Accept"] = 
+			request.Headers["X-CSRF-Token"] = DebugDataSingleton.Instance.X_CSRF_TOKEN;
+			request.Headers["Authorization"] = DebugDataSingleton.Instance.BasicAuth;
+			request.Headers["X-SMP-APPCID"] = DebugDataSingleton.Instance.X_SMP_APPCID;
+			request.Headers["X-Requested-With"] = "XMLHttpRequest";
+
+			var stream = await GetRequestStreamAsync(request);
+			using (var writer = new StreamWriter(stream))
+			{
+				writer.Write(data);
+				writer.Flush();
+				writer.Dispose();
+			}
+
+			var response = await GetResponseAsync(request);
+			var respStream = response.GetResponseStream();
+
+
+			using (StreamReader sr = new StreamReader(respStream))
+			{
+				//Need to return this response 
+				return sr.ReadToEnd();
+			}
+		}
+
+		public async Task<ServiceResult<ForgetPasswordRoot>> ResetPassword(string username)
+		{
+			ServiceResult<ForgetPasswordRoot> result = new ServiceResult<ForgetPasswordRoot>();
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "ForgetPasswordSet"))
+				{
+
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					httpclient.DefaultRequestHeaders.Add("X-CSRF-Token", "Fetch");
+
+					string Apiname = "ForgetPasswordSet(userName='" + username + "')";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					if (response.StatusCode == HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+						var forgetResponse = JsonConvert.DeserializeObject<ForgetPasswordRoot>(content);
+						result.Result = forgetResponse;
+						result.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						result.IsSuccess = true;
+					}
+					else
+					{
+						result.IsSuccess = false;
+						result.Result = null;
+						result.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+
+					return result;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+
+		}
+
+		public async Task<ServiceResult<SapBpDetails>> GetIndividualSBPId(string userID)
+		{
+			ServiceResult<SapBpDetails> returnVal = null;
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "getSapBpIdSet"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "getSapBpIdSet(userId=" + userID + ",role='IND')";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<SapBpDetails>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+						// all success
+						var getSapBpIndividualResponse = JsonConvert.DeserializeObject<SapBpDetails>(content);
+						DebugDataSingleton.Instance.SapBpIndividualID = getSapBpIndividualResponse.SapBpIndividualItem.SapBpIndividualId?.ToString();
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+				return returnVal;
+			}
+		}
+
+		void GetResponseHeaders(HttpResponseHeaders header)
+		{
+			DebugDataSingleton.Instance.COOKIE = string.Empty;
+			if (header != null)
+			{
+				foreach (var item in header)
+				{
+					string sTemp = String.Format("CacheControl {0}={1}", item.Key, item.Value);
+					if (item.Key == "X-CSRF-Token")
+					{
+						foreach (var item1 in item.Value)
+						{
+							DebugDataSingleton.Instance.X_CSRF_TOKEN = item1;
+						}
+						//DebugDataSingleton.Instance.COOKIE = item.Value.ToString();
+					}
+					if (item.Key == "Set-Cookie")
+					{
+						foreach (var item1 in item.Value)
+						{
+							DebugDataSingleton.Instance.COOKIE += item1 + ";";
+						}
+
+					}
+
+				}
+			}
+		}
+
+		public async Task<IRestResponse<ObligationsListRoot>> GetObligations()
+		{
+			string requestUrl = $"getProgramObligationsSet?$filter=userId eq {DebugDataSingleton.Instance.UserName} and locale eq 'en' and obligationToken eq 'All'";
+			var request = new RestRequest(requestUrl, Method.GET);
+
+			request.AddHeader("X-SMP-APPCID", DebugDataSingleton.Instance.ApplicationConnectionId);
+			request.AddHeader("Accept", "application/json");
+			request.AddHeader("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+			return await client.Execute<ObligationsListRoot>(request);
+		}
+
+		/// <summary>
+		/// Gets the profile completeness.
+		/// </summary>
+		/// <returns>The profile completeness.</returns>
+		/// <param name="programCode">Program code.</param>
+		public async Task<ProfileCompletenessRoot> GetProfileCompleteness(string programCode)
+		{
+			ProfileCompletenessRoot returnVal = null;
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "ProfileCompletenessSet"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					//string Apiname = serviceUrl + "ProfileCompletenessSet?$filter=nesIndividualId eq '" + DebugDataSingleton.Instance.NesIndividualID + "' and ProgramCode eq '" + programCode + "'";
+					string Apiname = serviceUrl + "ProfileCompletenessSet?$filter=ProgramCode eq '" + programCode + "'";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ProfileCompletenessRoot();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						returnVal = JsonConvert.DeserializeObject<ProfileCompletenessRoot>(content);
+						//DebugDataSingleton.Instance.SapBpIndividualID = getSapBpIndividualResponse.SapBpIndividualItem.SapBpIndividualId.ToString();
+
+					}
+					else
+					{
+						//returnVal.IsSuccess = false;
+						//returnVal.Result = null;
+						//returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+				return returnVal;
+			}
+		}
+
+		/// <summary>
+		/// Applies for program.
+		/// </summary>
+		/// <returns>The for program.</returns>
+		/// <param name="applyProgram">Apply program.</param>
+		public async Task<bool> ApplyForProgram(ApplyProgram applyProgram)
+		{
+			bool returnVal = false;
+			try
+			{
+				var requestBody = new ApplyProgram();
+				requestBody = applyProgram;
+
+				var requestJson = JsonConvert.SerializeObject(requestBody);
+
+				string responseString = await MakePostRequest(serviceUrl + "applyForProgramSet", requestJson);
+				var applyProgramResponseRootResult = JsonConvert.DeserializeObject<ApplyProgramResponseRoot>(responseString);
+				if (applyProgramResponseRootResult.ApplyProgramResponse.code == 0)
+				{
+					returnVal = true;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			return returnVal;
+		}
+
+		/// <summary>
+		/// Gets the individual profile batch.
+		/// </summary>
+		/// <returns>The individual profile batch.</returns>
+		public async Task<ProfileBatchDetailContainer> GetIndividualProfileBatch()
+		{
+			    ProfileBatchDetailContainer returnVal = null;
+				try
+				{
+					string body = BatchRequest.ForProfile();
+					//string responseString = await wc.UploadStringTaskAsync(new Uri(serviceUrl + "$batch"), "POST", body);
+					var requestJson = JsonConvert.SerializeObject(body);
+                    string responseString = await MakePostRequest(serviceUrl + "$batch", body, true);
+					returnVal = BatchResponse.GetProfileDetails(responseString);
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+			    return returnVal;
+		}
+
+		/// <summary>
+		/// Generates the company header string for batch.
+		/// </summary>
+		/// <returns>The company header string for batch.</returns>
+		/// <param name="apiName">API name.</param>
+		/// <param name="criteriaValueList">Criteria value list.</param>
+		public string GenerateCompanyHeaderStringForBatch(string apiName, IList<AppliedJob> criteriaValueList)
+		{
+			string authHeader = "Authorization:" + DebugDataSingleton.Instance.BasicAuth;
+			string X_SMP_APPCIDHeader = "X-SMP-APPCID:" + DebugDataSingleton.Instance.X_SMP_APPCID;
+			string acceptHeader = "Accept:application/json";
+			StringBuilder sbBatchHeader = new StringBuilder();
+			foreach (var item in criteriaValueList)
+			{
+				sbBatchHeader.AppendLine("--batch");
+				sbBatchHeader.AppendLine("Content-Type:application/http");
+				sbBatchHeader.AppendLine("Content-Transfer-Encoding: binary");
+				sbBatchHeader.AppendLine("\r");
+				sbBatchHeader.AppendLine(string.Format("GET {0}?$filter=employerId%20eq%20{1}&$format=json HTTP/1.1", apiName, Convert.ToInt64(item.employerId)));
+				sbBatchHeader.AppendLine("\r");
+				sbBatchHeader.AppendLine("\r");
+			}
+			sbBatchHeader.Append("--batch--");
+			string returnString = sbBatchHeader.ToString();
+			return returnString;
+		}
+
+		/// <summary>
+		/// Generates the job details header.
+		/// </summary>
+		/// <returns>The job details header.</returns>
+		/// <param name="apiName">API name.</param>
+		/// <param name="criteriaValueList">Criteria value list.</param>
+		public string GenerateJobDetailsHeader(List<string> apiName, IList<AppliedJob> criteriaValueList)
+		{
+			string authHeader = "Authorization:" + DebugDataSingleton.Instance.BasicAuth;
+			string X_SMP_APPCIDHeader = "X-SMP-APPCID:" + DebugDataSingleton.Instance.X_SMP_APPCID;
+			string acceptHeader = "Accept:application/json";
+			StringBuilder sbBatchHeader = new StringBuilder();
+			foreach (var item in criteriaValueList)
+			{
+				foreach (var subitem in apiName)
+				{
+					sbBatchHeader.AppendLine("--batch");
+					sbBatchHeader.AppendLine("Content-Type:application/http");
+					sbBatchHeader.AppendLine("Content-Transfer-Encoding: binary");
+					sbBatchHeader.AppendLine("\r");
+					sbBatchHeader.AppendLine(string.Format("GET {0}?$filter=jobPostId%20eq%20'{1}'%20and%20language%20eq%20'{2}'&$format=json HTTP/1.1", subitem, item.jobPostId, "en"));
+					sbBatchHeader.AppendLine("\r");
+					sbBatchHeader.AppendLine("\r");
+				}
+			}
+			sbBatchHeader.Append("--batch--");
+			string returnString = sbBatchHeader.ToString();
+			return returnString;
+		}
+		/// <summary>
+		/// Executes the batch.
+		/// </summary>
+		/// <returns>The batch.</returns>
+		/// <param name="inputHeader">Input header.</param>
+		public async Task<ServiceResult<JobDetailBatchContainer>> ExecuteBatchAsync(string inputHeader)
+		{
+			ServiceResult<JobDetailBatchContainer> returnVal = new ServiceResult<JobDetailBatchContainer>();
+
+			try
+			{
+
+				string body = inputHeader;
+				string responseString = await MakePostRequest(serviceUrl + "$batch", body, true);
+				var jobBatchresut = BatchResponse.GenerateAppliedJobDetailModel(responseString);
+				returnVal.Result = jobBatchresut;
+				return returnVal;
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		/// <summary>
+		/// Executes the batch.
+		/// </summary>
+		/// <returns>The batch.</returns>
+		/// <param name="inputHeader">Input header.</param>
+		public async Task<ServiceResult<List<JobDetailSetRoot>>> ExecuteJobListBatchAsync(string inputHeader)
+		{
+			ServiceResult<List<JobDetailSetRoot>> returnVal = new ServiceResult<List<JobDetailSetRoot>>();
+
+			try
+			{
+				
+					string body = inputHeader;
+					//string responseString = await wc.UploadStringTaskAsync(new Uri(serviceUrl + "$batch"), "POST", body);
+                    string responseString = await MakePostRequest(serviceUrl + "$batch", body, true);
+					var jobBatchresut = BatchResponse.GenerateAppliedJobListModel(responseString);
+
+					returnVal.Result = jobBatchresut;
+
+
+					return returnVal;
+				
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		public async Task<List<CompanyObjectRoot>> ExecuteCompanyBatchAsync(string inputHeader, string batchName)
+		{
+			List<CompanyObjectRoot> returnVal = null;
+
+			try
+			{
+					string body = inputHeader;
+				    string responseString = await MakePostRequest(serviceUrl + "$batch", body, true);	
+                    if (batchName == "COMPANY")
+					{
+						var companyBatchresut = BatchResponse.GenerateCompanyModel(responseString);
+						returnVal = companyBatchresut;
+					}
+					//else if (batchName == "JOBDETAIL")
+					//{
+					//  var jobBatchresut = BatchResponse.GenerateAppliedJobDetailModel(responseString);
+					//  returnVal = jobBatchresut;
+					//}
+
+					return returnVal;
+				
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		public async Task<IRestResponse<AppliedJobListRoot>> GetAppliedJobsList()
+		{
+			//var request = new RestRequest($"getAppliedJobsListSet?$filter=nesIndividualID eq '{DebugDataSingleton.Instance.NesIndividualID}' and language eq 'en'", Method.GET);
+			var request = new RestRequest($"getAppliedJobsListSet?$filter=language eq '{DebugDataSingleton.Instance.Language}'", Method.GET);
+
+			request.AddHeader("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+			request.AddHeader("Accept", "application/json");
+			request.AddHeader("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+			var result = await client.Execute<AppliedJobListRoot>(request);
+			return result;
+		}
+
+		/// <summary>
+		/// Gets the applied jobs list1.
+		/// </summary>
+		/// <returns>The applied jobs list1.</returns>
+		public async Task<ServiceResult<AppliedJobListRoot>> GetAppliedJobsListService()
+		{
+			ServiceResult<AppliedJobListRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getAppliedJobsListSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//string Apiname = string.Format("getAppliedJobsListSet?$filter=nesIndividualID eq '{0}' and language eq '{1}'", DebugDataSingleton.Instance.NesIndividualID, "en");
+					string Apiname = string.Format("getAppliedJobsListSet?$filter=language eq '{0}'", DebugDataSingleton.Instance.Language);
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<AppliedJobListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getNesIndividualResponse = JsonConvert.DeserializeObject<AppliedJobListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getNesIndividualResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		/// <summary>
+		/// Gets the matched jobs list.
+		/// </summary>
+		/// <returns>The matched jobs list.</returns>
+		public async Task<ServiceResult<AppliedJobListRoot>> GetMatchedJobsList()
+
+		{
+			ServiceResult<AppliedJobListRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getJobsMatchedSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//string Apiname = "getJobsMatchedSet?$filter=NesIndividualID eq '" + DebugDataSingleton.Instance.NesIndividualID + "' and maxResultCount eq '10' and resultOffset eq '0' and selectMatchCount eq 'true' and language eq 'en'";
+					string Apiname = "getJobsMatchedSet?$filter=maxResultCount eq '10' and resultOffset eq '0' and selectMatchCount eq 'true' and language eq 'en'";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<AppliedJobListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+
+						var content = await response.Content.ReadAsStringAsync();
+						// all success
+						var getMatchedJobList = JsonConvert.DeserializeObject<AppliedJobListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getMatchedJobList;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		/// <summary>
+		/// Gets the watch job list.
+		/// </summary>
+		/// <returns>The watch job list.</returns>
+		public async Task<ServiceResult<JobDetailsDtoWatchRoot>> GetWatchJobList()
+		{
+			ServiceResult<JobDetailsDtoWatchRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "WatchListSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//string Apiname = string.Format("WatchListSet?$filter=nesIndividualId eq {0}", DebugDataSingleton.Instance.NesIndividualID);
+					string Apiname = "WatchListSet";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<JobDetailsDtoWatchRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getWatchJobList = JsonConvert.DeserializeObject<JobDetailsDtoWatchRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getWatchJobList;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		/// <summary>
+		/// Adds the job to watch list.
+		/// </summary>
+		/// <returns>The job to watch list.</returns>
+		/// <param name="addToWatchList">Add to watch list.</param>
+		//public async Task<AddToWatchListRoot> AddJobToWatchList(AddToWatchList addToWatchList)
+		//{
+		//  AddToWatchListRoot addToWatchListResponse = new AddToWatchListRoot();
+		//  try
+		//  {
+		//      using (WebClient wc = new WebClient())
+		//      {
+
+		//          wc.Headers.Add(HttpRequestHeader.Cookie, DebugDataSingleton.Instance.COOKIE);
+		//          wc.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8");
+		//          wc.Headers.Add(HttpRequestHeader.Accept, "application/json, text/javascript, */*; q=0.01");
+		//          wc.Headers.Add("X-CSRF-Token", DebugDataSingleton.Instance.X_CSRF_TOKEN);
+		//          wc.Headers.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+		//          wc.Headers.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+		//          wc.Headers.Add("X-Requested-With", "XMLHttpRequest");
+
+		//          var requestJson = JsonConvert.SerializeObject(addToWatchList);
+
+		//          string responseString = await wc.UploadStringTaskAsync(new Uri(serviceUrl + "UpdateIndividualWatchListSet"), "POST", requestJson);
+		//          addToWatchListResponse = JsonConvert.DeserializeObject<AddToWatchListRoot>(responseString);
+
+		//      }
+		//  }
+		//  catch (Exception ex)
+		//  {
+		//      throw ex;
+		//  }
+
+		//  return addToWatchListResponse;
+		//}
+
+
+		/// <summary>
+		/// Adds the job to watch list.
+		/// </summary>
+		/// <returns>The job to watch list.</returns>
+		/// <param name="addToWatchList">Add to watch list.</param>
+		public async Task<ServiceResult<AddToWatchListRoot>> AddJobToWatchList(AddToWatchList addToWatchList)
+		{
+			ServiceResult<AddToWatchListRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "UpdateIndividualWatchListSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					var requestJson = JsonConvert.SerializeObject(addToWatchList);
+
+					string Apiname = string.Format("UpdateIndividualWatchListSet?$filter=jobId eq {0}",
+												   addToWatchList.individualWatchListEntryDto.jobDetailsDto.jobId);
+
+					//string Apiname = "WatchListSet";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<AddToWatchListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getWatchJobList = JsonConvert.DeserializeObject<AddToWatchListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getWatchJobList;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		//public async Task<ServiceResult<DeleteWatchListResponse>> DeleteJobFromWatchListAsync(RemoveFromWatchList removeFromWatchList)
+		//{
+		//  ServiceResult<DeleteWatchListResponse> returnResponse = new ServiceResult<DeleteWatchListResponse>();
+		//  try
+		//  {
+		//      using (WebClient wc = new WebClient())
+		//      {
+
+		//          wc.Headers.Add(HttpRequestHeader.Cookie, DebugDataSingleton.Instance.COOKIE);
+		//          wc.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8");
+		//          wc.Headers.Add(HttpRequestHeader.Accept, "application/json, text/javascript, */*; q=0.01");
+		//          wc.Headers.Add("X-CSRF-Token", DebugDataSingleton.Instance.X_CSRF_TOKEN);
+		//          wc.Headers.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+		//          wc.Headers.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+		//          wc.Headers.Add("X-Requested-With", "XMLHttpRequest");
+
+		//          var requestJson = JsonConvert.SerializeObject(removeFromWatchList);
+
+		//          byte[] dataBytes = Encoding.UTF8.GetBytes(requestJson);
+		//          byte[] responseBytes = await wc.UploadDataTaskAsync(new Uri(serviceUrl + "DeleteIndividualWatchListSet"), "POST", dataBytes);
+		//          string responseString = Encoding.UTF8.GetString(responseBytes);
+		//          DeleteWatchListResponse responseObject = JsonConvert.DeserializeObject<DeleteWatchListResponse>(responseString);
+		//          //returnVal = true;
+		//          if (responseObject != null)
+		//          {
+		//              returnResponse.IsSuccess = true;
+		//              returnResponse.StatusCode = "201";
+		//              returnResponse.Result = responseObject;
+		//          }
+		//          else
+		//          {
+		//              returnResponse.IsSuccess = false;
+		//              returnResponse.StatusCode = "500";
+		//              returnResponse.Result = null;
+		//          }
+		//          return returnResponse;
+		//      }
+
+		//  }
+		//  catch (Exception ex)
+		//  {
+		//      throw ex;
+		//  }
+		//  return returnResponse;
+		//}
+
+		public async Task<ServiceResult<DeleteWatchListResponseRoot>> DeleteJobFromWatchListAsync(RemoveFromWatchList removeFromWatchList)
+		{
+			ServiceResult<DeleteWatchListResponseRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "WatchListSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Format("DeleteIndividualWatchListSet?$filter=watchListId eq {0}",
+												   removeFromWatchList.watchListEntryId.watchListId);
+					//string Apiname = "WatchListSet";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<DeleteWatchListResponseRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getWatchJobList = JsonConvert.DeserializeObject<DeleteWatchListResponseRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getWatchJobList;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+
+		/// <summary>
+		/// Gets the job matching search for Guest and Individual
+		/// </summary>
+		/// <returns>The job matching search.</returns>
+		/// <param name="searchFilter">Search filter.</param>
+		//for guest searchFilter will be ?$filter=location eq 'Riyadh' and Keyword eq 'test' 
+		//for individual searchFilter will be  ?$filter=Keyword eq 'test'
+		public async Task<ServiceResult<AppliedJobListRoot>> GetJobMatchingSearch(string searchFilter)
+		{
+			ServiceResult<AppliedJobListRoot> returnVal = null;
+			try
+			{
+				//string parameter = String.Format("filter=nesIndividualID eq {0} ", DebugDataSingleton.Instance.NesIndividualID);
+				string parameter = string.Empty;
+				if (searchFilter != "")
+				{
+					//parameter = String.Concat(parameter,"and ", searchFilter);
+					parameter = searchFilter;
+
+				}
+
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "jobPostingSearchSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Concat("jobPostingSearchSet?$filter=", parameter);
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<AppliedJobListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getNesIndividualResponse = JsonConvert.DeserializeObject<AppliedJobListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getNesIndividualResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			finally
+			{
+			}
+		}
+
+		/// <summary>
+		/// Gets the complaints.
+		/// </summary>
+		/// <returns>The complaints.</returns>
+		/// <param name="searchFilter">Search filter.</param>
+		public async Task<ServiceResult<ComplaintsListRoot>> GetComplaints()
+		{
+			ServiceResult<ComplaintsListRoot> returnVal = null;
+			try
+			{
+				string strFullSyncData = "";
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "TAppealsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Format("TAppealsSet", DebugDataSingleton.Instance.SapBpIndividualID);
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<ComplaintsListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var modelResponse = JsonConvert.DeserializeObject<ComplaintsListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = modelResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			finally
+			{
+			}
+		}
+
+		/// <summary>
+		/// Gets all programs.
+		/// </summary>
+		/// <returns>The all programs.</returns>
+		public async Task<ServiceResult<ProgramListRoot>> GetAllPrograms()
+		{
+			ServiceResult<ProgramListRoot> returnVal = null;
+
+			if (string.IsNullOrEmpty(DebugDataSingleton.Instance?.BasicAuth)) return returnVal;
+
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getAllProgramDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Format("getAllProgramDetailsSet?$filter=language eq '{0}'", "en");
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<ProgramListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getNesIndividualResponse = JsonConvert.DeserializeObject<ProgramListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getNesIndividualResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			finally
+			{
+			}
+		}
+
+		//public async Task<ApplyJobRoot> ApplyForJob(ApplyJob applyJob)
+		//{
+		//  ApplyJobRoot applyJobRoot = new ApplyJobRoot();
+		//  try
+		//  {
+		//      using (WebClient wc = new WebClient())
+		//      {
+
+		//          wc.Headers.Add(HttpRequestHeader.Cookie, DebugDataSingleton.Instance.COOKIE);
+		//          wc.Headers.Add(HttpRequestHeader.ContentType, "application/json; charset=utf-8");
+		//          wc.Headers.Add(HttpRequestHeader.Accept, "application/json, text/javascript, */*; q=0.01");
+		//          wc.Headers.Add("X-CSRF-Token", DebugDataSingleton.Instance.X_CSRF_TOKEN);
+		//          wc.Headers.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+		//          wc.Headers.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+		//          wc.Headers.Add("X-Requested-With", "XMLHttpRequest");
+
+		//          var requestJson = JsonConvert.SerializeObject(applyJob);
+
+		//          string responseString = await wc.UploadStringTaskAsync(new Uri(serviceUrl + "applyForJobSet"), "POST", requestJson);
+		//          applyJobRoot = JsonConvert.DeserializeObject<ApplyJobRoot>(responseString);
+		//      }
+
+		//  }
+		//  catch (Exception ex)
+		//  {
+		//      throw ex;
+		//  }
+		//  return applyJobRoot;
+		//}
+
+		public async Task<ServiceResult<ApplyJobRoot>> ApplyForJob(ApplyJob applyJob)
+		{
+			//ApplyJobRoot returnVal = new ApplyJobRoot();
+			ServiceResult<ApplyJobRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getAllProgramDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Format("applyForJobSet?$filter=jobPostId eq '{0}' and employerId eq '{1}' and individualApplicationId eq {2}",
+												   applyJob.IndividualApplicationDetails.JobPostId,
+												   applyJob.IndividualApplicationDetails.EmployerId,
+												   applyJob.IndividualApplicationDetails.ApplicationID);
+
+					//string Apiname = string.Format("applyForJobSet");
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<ApplyJobRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var applyForJobResponse = JsonConvert.DeserializeObject<ApplyJobRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = applyForJobResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		public async Task<SurveyContainer> GetSurveyBatch(int surveyID)
+		{
+			SurveyContainer returnVal = null;
+
+			//using (PortableWebClient wc = new PortableWebClient())
+			//{
+
+				try
+				{
+					string body = BatchRequest.ForSurvey(surveyID);
+                    string responseString = await MakePostRequest(serviceUrl + "$batch", body, true);
+					returnVal = BatchResponse.GetSurvey(responseString);
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+			//}
+
+			return returnVal;
+		}
+
+		/// <summary>
+		/// Gets the Interview feedback request form.
+		/// </summary>
+		/// <returns>The feedback application form.</returns>
+		public async Task<ServiceResult<FeedbackRoot>> ApplicationFeedbackByID(long applicationID)
+		{
+			ServiceResult<FeedbackRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "indToEmpFeedbackSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					string Apiname = "indToEmpFeedbackSet(applicationId='" + applicationID + "',saveSubmit='true')";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<FeedbackRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getFeedbackRoot = JsonConvert.DeserializeObject<FeedbackRoot>(content);
+						if (getFeedbackRoot.ApplicationFeedback.Code == "0")
+						{
+							returnVal.IsSuccess = true;
+						}
+						else
+						{
+							returnVal.IsSuccess = false;
+						}
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getFeedbackRoot;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+			finally
+			{
+			}
+		}
+
+
+
+		/// <summary>
+		/// Request for OTP.
+		/// </summary>
+		public async Task<ServiceResult<IndividualMobileRoot>> OTPRequest(int loginAttempts, EnumGlobal.OTPRequestType OTPRequestType, string OTPvalue)
+		{
+			//bool returnVal = false;
+			ServiceResult<IndividualMobileRoot> returnVal = new ServiceResult<IndividualMobileRoot>();
+			returnVal.StatusCode = System.Net.HttpStatusCode.InternalServerError.ToString();
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "PSOAuthenticationSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					httpclient.DefaultRequestHeaders.Add("ChannelId", "PORTAL");
+					//httpclient.DefaultRequestHeaders.Add("UserId", DebugDataSingleton.Instance.NesIndividualID);
+					httpclient.DefaultRequestHeaders.Add("UserType", "IND");
+					httpclient.DefaultRequestHeaders.Add("PrefLang", DebugDataSingleton.Instance.Language);
+
+					//string Apiname = "PSOAuthenticationSet(nesIndividualId=" + DebugDataSingleton.Instance.NesIndividualID + ",loginAttempts=" + loginAttempts + ")";
+					string Apiname = "PSOAuthenticationSet";
+					if (OTPRequestType == EnumGlobal.OTPRequestType.ValidateOTP)
+					{
+						httpclient.DefaultRequestHeaders.Add("AuthMethod", "OTP");
+						httpclient.DefaultRequestHeaders.Add("AuthValue", OTPvalue);
+
+						try
+						{
+							string strFullSyncData = string.Empty;
+							var response = await httpclient.GetAsync(serviceUrl + Apiname);
+							if (response.StatusCode == System.Net.HttpStatusCode.OK)
+							{
+								var content = await response.Content.ReadAsStringAsync();
+
+								var getPSOResponse = JsonConvert.DeserializeObject<IndividualMobileRoot>(content);
+								if (getPSOResponse.IndividualMobileList.results[0].Code == "0")
+								{
+									returnVal.StatusCode = response.StatusCode.ToString();
+									returnVal.Result = getPSOResponse;
+								}
+								else
+								{
+									returnVal.StatusCode = response.StatusCode.ToString();
+									returnVal.Message = Convert.ToString(getPSOResponse.IndividualMobileList.results[0].Message);
+								}
+							}
+							else
+							{
+								returnVal.StatusCode = response.StatusCode.ToString();
+							}
+						}
+						catch (Exception ex)
+						{
+						}
+					}
+					else
+					{
+						var response = await httpclient.GetAsync(serviceUrl + Apiname);
+						returnVal.StatusCode = response.StatusCode.ToString();
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		public async Task<ServiceResult<ProgramListRoot>> GetProgramOverView(int programId)
+		{
+			ServiceResult<ProgramListRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getAllProgramDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Format("getProgramOverviewSet?$filter=locale eq '{0}' and programId eq {1}",
+												   DebugDataSingleton.Instance.Language,
+												   programId);
+
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<ProgramListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getProgramResponse = JsonConvert.DeserializeObject<ProgramListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getProgramResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+			finally
+			{
+			}
+		}
+
+		public async Task<ServiceResult<ProgramListRoot>> GetMyProgram(int statusId)
+		{
+			ServiceResult<ProgramListRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getProgramDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = string.Format("getProgramDetailsSet?$filter=locale eq '{0}' and status eq {1}",
+												   DebugDataSingleton.Instance.Language,
+												   statusId);
+
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<ProgramListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getProgramResponse = JsonConvert.DeserializeObject<ProgramListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getProgramResponse;
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+			finally
+			{
+			}
+		}
+
+		public async Task<ServiceResult<IndividualApplicationDetailRoot>> GetIndividualApplicationDetailsSet(string applicationID)
+		{
+			ServiceResult<IndividualApplicationDetailRoot> returnVal = null;
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "IndividualApplicationDetailsSet"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//string Apiname = serviceUrl + "IndividualApplicationDetailsSet(nesIndividualID=" + DebugDataSingleton.Instance.NesIndividualID + ",applicationID=" + applicationID + ",locale='" + DebugDataSingleton.Instance.Language + "')";
+					string Apiname = string.Format("IndividualApplicationDetailsSet?$filter=applicationID eq {0} and locale eq '{1}'", applicationID, DebugDataSingleton.Instance.Language);
+					//string Apiname =  "IndividualApplicationDetailsSet(applicationID=" + applicationID + ",locale='" + DebugDataSingleton.Instance.Language + "')";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<IndividualApplicationDetailRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<IndividualApplicationDetailRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+				return returnVal;
+			}
+		}
+
+		/// <summary>
+		/// Posts the answers for the survey questions
+		/// </summary>
+		/// <returns>true or false</returns>
+		public async Task<bool> UpdateSurveyResponse(SurveyResponse surveyResponse)
+		{
+			bool returnVal = false;
+			try
+			{
+			
+				string body = JsonConvert.SerializeObject(surveyResponse);
+                string responseString = await MakePostRequest(serviceUrl + "SurveyHeaderSet", body, false);
+				returnVal = true;
+			
+				return returnVal;
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual application details set.
+		/// </summary>
+		/// <returns>The individual application details set.</returns>
+		public async Task<ServiceResult<ProfileBatchDetail>> GetIndividualProfileDetailsSet()
+		{
+			ServiceResult<ProfileBatchDetail> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "GetIndividualProfileDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					httpclient.DefaultRequestHeaders.Add("X-CSRF-Token", "Fetch");
+
+					//string Apiname = serviceUrl + "GetIndividualProfileDetailsSet(nesIndividualId=" + DebugDataSingleton.Instance.NesIndividualID + ")";
+					string Apiname = serviceUrl + "GetIndividualProfileDetailsSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetail>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetail>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+						GetResponseHeaders(response.Headers);
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Request for OTP.
+		/// </summary>
+		public async Task<ServiceResult<CheckMobileUsabilityRoot>> CheckMobileUsability(string mobileNumber)
+		{
+			mobileNumber = ParserHelper.MobileNumberPersist(mobileNumber);
+			ServiceResult<CheckMobileUsabilityRoot> returnVal = new ServiceResult<CheckMobileUsabilityRoot>();
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "checkMobileUsabilitySet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = "checkMobileUsabilitySet(mobileNumber='" + mobileNumber + "')";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<CheckMobileUsabilityRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						var individualMobileRoot = JsonConvert.DeserializeObject<CheckMobileUsabilityRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = individualMobileRoot;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Request for OTP.
+		/// </summary>
+		public async Task<ServiceResult<IndividualMobileRoot>> UpdateMobileNumber(string mobileNumber, EnumGlobal.OTPRequestType OTPRequestType, string OTPvalue)
+		{
+			//bool returnVal = false;
+			ServiceResult<IndividualMobileRoot> returnVal = new ServiceResult<IndividualMobileRoot>();
+			returnVal.StatusCode = System.Net.HttpStatusCode.InternalServerError.ToString();
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "updateMobileNumberSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					httpclient.DefaultRequestHeaders.Add("ChannelId", "PORTAL");
+					//httpclient.DefaultRequestHeaders.Add("UserId", DebugDataSingleton.Instance.NesIndividualID);
+					httpclient.DefaultRequestHeaders.Add("UserType", "IND");
+					httpclient.DefaultRequestHeaders.Add("PrefLang", DebugDataSingleton.Instance.Language);
+					httpclient.DefaultRequestHeaders.Add("MobileNum", mobileNumber);
+
+					//string Apiname = "updateMobileNumberSet(mobileNumber='" + mobileNumber + "',nesIndividualId='" + DebugDataSingleton.Instance.NesIndividualID + "',verify='',otp='')";
+					string Apiname = "updateMobileNumberSet";
+
+					if (OTPRequestType == EnumGlobal.OTPRequestType.ValidateOTP)
+					{
+						httpclient.DefaultRequestHeaders.Add("AuthMethod", "OTP");
+						httpclient.DefaultRequestHeaders.Add("AuthValue", OTPvalue);
+
+						try
+						{
+							string strFullSyncData = string.Empty;
+							var response = await httpclient.GetAsync(serviceUrl + Apiname);
+							if (response.StatusCode == System.Net.HttpStatusCode.OK)
+							{
+								var content = await response.Content.ReadAsStringAsync();
+
+								var getIndividualResponse = JsonConvert.DeserializeObject<IndividualMobileRoot>(content);
+								//result.Result.IndividualMobileList.results[0].Code
+								if (getIndividualResponse.IndividualMobileList.results[0].Code == "0")
+								{
+									returnVal.StatusCode = response.StatusCode.ToString();
+									returnVal.Result = getIndividualResponse;
+								}
+								else
+								{
+									returnVal.StatusCode = response.StatusCode.ToString();
+									returnVal.Message = Convert.ToString(getIndividualResponse.IndividualMobileList.results[0].Message);
+								}
+							}
+							else
+							{
+								returnVal.StatusCode = response.StatusCode.ToString();
+							}
+						}
+						catch (Exception ex)
+						{
+						}
+					}
+					else
+					{
+						var response = await httpclient.GetAsync(serviceUrl + Apiname);
+						returnVal.StatusCode = response.StatusCode.ToString();
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+
+			}
+		}
+
+		/// <summary>
+		/// Request for OTP.
+		/// </summary>
+		public async Task<ServiceResult<EmploymentPrefListRoot>> GetEmploymentPreferenceSet()
+		{
+			ServiceResult<EmploymentPrefListRoot> returnVal = new ServiceResult<EmploymentPrefListRoot>();
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "EmploymentPreferenceSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+
+					//string Apiname = string.Format("EmploymentPreferenceSet?$filter=nesIndividualId eq '{0}'",
+					//                         DebugDataSingleton.Instance.NesIndividualID);
+					string Apiname = "EmploymentPreferenceSet";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname).ConfigureAwait(false);
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						var employmentPrefRoot = JsonConvert.DeserializeObject<EmploymentPrefListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = employmentPrefRoot;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Verify User
+		/// </summary>
+		public async Task<ServiceResult<VerifyUserRoot>> VerifyUser()
+		{
+			ServiceResult<VerifyUserRoot> returnVal = new ServiceResult<VerifyUserRoot>();
+			try
+			{
+
+				//VerifyUserSet(UserID= '6576019', SapBpID= 'I006576019', language='en')
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "VerifyUserSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//string Apiname = "VerifyUserSet(UserID='" + DebugDataSingleton.Instance.NesIndividualID + "',SapBpID='" + DebugDataSingleton.Instance.SapBpIndividualID + "',language='" + DebugDataSingleton.Instance.Language + "')";
+					string Apiname = string.Format("VerifyUserSet?$filter=language eq '{0}'", DebugDataSingleton.Instance.Language);
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<VerifyUserRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						var individualMobileRoot = JsonConvert.DeserializeObject<VerifyUserRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = individualMobileRoot;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		public async Task<ServiceResult<InterviewRoot>> GetInterviewDetails(string applicationID)
+		{
+			ServiceResult<InterviewRoot> returnVal = null;
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "getInterviewDateSet"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = "getInterviewDateSet(individualApplicationId='" + applicationID + "')";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<InterviewRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getInterviewResponse = JsonConvert.DeserializeObject<InterviewRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getInterviewResponse;
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+
+				return returnVal;
+			}
+		}
+
+		public async Task<ServiceResult<PSOObligationRoot>> GetPSOObligationID()
+		{
+			ServiceResult<PSOObligationRoot> returnVal = null;
+			using (HttpServiceClient httpclient = new HttpServiceClient("", "getPSOObligationIdSet"))
+			{
+				try
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					//string Apiname = "getPSOObligationIdSet(nesIndividualId='" + DebugDataSingleton.Instance.NesIndividualID + "')";
+					string Apiname = "getPSOObligationIdSet";
+					var response = await httpclient.GetAsync(serviceUrl + Apiname);
+					returnVal = new ServiceResult<PSOObligationRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getPSOObligationResponse = JsonConvert.DeserializeObject<PSOObligationRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+						returnVal.Result = getPSOObligationResponse;
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+				}
+				catch (Exception ex)
+				{
+					throw ex;
+				}
+
+				return returnVal;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual education set.
+		/// </summary>
+		/// <returns>The individual education set.</returns>
+		public async Task<ServiceResult<ProfileBatchDetailResult>> GetEducationSet()
+		{
+			ServiceResult<ProfileBatchDetailResult> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "EducationSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+
+					string Apiname = serviceUrl + "EducationSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetailResult>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetailResult>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual license set.
+		/// </summary>
+		/// <returns>The individual license set.</returns>
+		public async Task<ServiceResult<ProfileBatchDetailResult>> GetLicenseSet()
+		{
+			ServiceResult<ProfileBatchDetailResult> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "LicenseSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "LicenseSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetailResult>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetailResult>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual ProfessionalExperienceSet.
+		/// </summary>
+		/// <returns>The ProfessionalExperienceSet.</returns>
+		public async Task<ServiceResult<ProfileBatchDetailResult>> GetProfessionalExperienceSet()
+		{
+			ServiceResult<ProfileBatchDetailResult> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "ProfessionalExperienceSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "ProfessionalExperienceSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetailResult>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetailResult>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual ReferenceSet.
+		/// </summary>
+		/// <returns>The ReferenceSet.</returns>
+		public async Task<ServiceResult<ProfileBatchDetailResult>> GetReferenceSet()
+		{
+			ServiceResult<ProfileBatchDetailResult> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "ReferenceSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "ReferenceSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetailResult>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetailResult>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual CompetencySet.
+		/// </summary>
+		/// <returns>The CompetencySet.</returns>
+		public async Task<ServiceResult<ProfileBatchDetailResult>> GetCompetencySet()
+		{
+			ServiceResult<ProfileBatchDetailResult> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "CompetencySet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "CompetencySet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetailResult>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetailResult>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual TrainingandCertificateSet.
+		/// </summary>
+		/// <returns>The TrainingandCertificateSet.</returns>
+		public async Task<ServiceResult<ProfileBatchDetailResult>> GetTrainingandCertificateSet()
+		{
+			ServiceResult<ProfileBatchDetailResult> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "TrainingandCertificateSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "TrainingandCertificateSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetailResult>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetailResult>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+        /// <summary>
+        /// Gets the obligations batch.
+        /// </summary>
+        /// <returns>The obligations container.</returns>
+        public async Task<ObligationContainer> GetObligationsBatch(string date)
+        {
+            ObligationContainer ObligationContainer = new ObligationContainer();
+
+            try
+            {
+                var obligationAnnouncementRoot = await GetAnnouncementDetailsSet();
+                if (obligationAnnouncementRoot.StatusCode == "200")
+                {
+                    ObligationContainer.ObligationAnnouncementRoot = obligationAnnouncementRoot.Result;
+                }
+                var obligationProgram = await GetProgramObligationsSet();
+                if (obligationProgram.StatusCode == "200")
+                {
+                    ObligationContainer.ObligationsListRoot = obligationProgram.Result;
+                }
+                var tncRoot = await GettncDetailsModelsSet();
+                if (tncRoot.StatusCode == "200")
+                {
+                    ObligationContainer.TermsAndConditionsRoot = tncRoot.Result;
+                }
+                var programTermsRoot = await GetPLTNCDetailsSet();
+                if (programTermsRoot.StatusCode == "200")
+                {
+                    ObligationContainer.ProgramTermsRoot = programTermsRoot.Result;
+                }
+                var surveyRoot = await GetGetSurveyByIndividualSet();
+                if (surveyRoot.StatusCode == "200")
+                {
+                    ObligationContainer.SurveyRoot = surveyRoot.Result;
+
+                    var surveyList = ObligationContainer.SurveyRoot.SurveyList.Surveys.Where(a => a.surveyType.ToUpper() == "GENERAL");
+                    if (surveyList != null)
+                    {
+                        ObligationContainer.SurveyRoot.SurveyList.Surveys = surveyList.ToList();
+                    }
+                    else
+                    {
+                        ObligationContainer.SurveyRoot.SurveyList.Surveys = null;
+                    }
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return ObligationContainer;
+        }
+
+
+		/// <summary>
+		/// Gets the individual AnnouncementDetails.
+		/// </summary>
+		/// <returns>The AnnouncementDetailsSet.</returns>
+		public async Task<ServiceResult<ObligationAnnouncementRoot>> GetAnnouncementDetailsSet()
+		{
+			ServiceResult<ObligationAnnouncementRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getAnnouncementDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "getAnnouncementDetailsSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ObligationAnnouncementRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ObligationAnnouncementRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the individual ProgramObligations.
+		/// </summary>
+		/// <returns>The ProgramObligationsSet.</returns>
+		public async Task<ServiceResult<ObligationsListRoot>> GetProgramObligationsSet()
+		{
+			ServiceResult<ObligationsListRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "getProgramObligationsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+
+					string Apiname = serviceUrl + "getProgramObligationsSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ObligationsListRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ObligationsListRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the tncDetailsModelsSet.
+		/// </summary>
+		/// <returns>The tncDetailsModelsSet.</returns>
+		public async Task<ServiceResult<TermsAndConditionsRoot>> GettncDetailsModelsSet()
+		{
+			ServiceResult<TermsAndConditionsRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "tncDetailsModelsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+
+					string Apiname = serviceUrl + "tncDetailsModelsSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<TermsAndConditionsRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<TermsAndConditionsRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the PLTNCDetailsSet.
+		/// </summary>
+		/// <returns>The PLTNCDetailsSet.</returns>
+		public async Task<ServiceResult<ProgramTermsRoot>> GetPLTNCDetailsSet()
+		{
+			ServiceResult<ProgramTermsRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "PLTNCDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+
+					string Apiname = serviceUrl + "PLTNCDetailsSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProgramTermsRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<ProgramTermsRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Gets the GetSurveyByIndividualSet.
+		/// </summary>
+		/// <returns>The GetSurveyByIndividualSet.</returns>
+		public async Task<ServiceResult<SurveyRoot>> GetGetSurveyByIndividualSet()
+		{
+			ServiceResult<SurveyRoot> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "GetSurveyByIndividualSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+
+					string Apiname = serviceUrl + "GetSurveyByIndividualSet";
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<SurveyRoot>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						var getIndApplicationresponse = JsonConvert.DeserializeObject<SurveyRoot>(content);
+						returnVal.IsSuccess = true;
+						returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+
+		/// <summary>
+		/// Gets the individual application details set.
+		/// </summary>
+		/// <returns>The individual application details set.</returns>
+		public async Task<ServiceResult<ProfileBatchDetail>> GetCSRFTOKEN()
+		{
+			ServiceResult<ProfileBatchDetail> returnVal = null;
+			try
+			{
+				using (HttpServiceClient httpclient = new HttpServiceClient("", "GetIndividualProfileDetailsSet"))
+				{
+					httpclient.DefaultRequestHeaders.Add("X-SMP-APPCID", DebugDataSingleton.Instance.X_SMP_APPCID);
+					httpclient.DefaultRequestHeaders.Add("Authorization", DebugDataSingleton.Instance.BasicAuth);
+					httpclient.DefaultRequestHeaders.Add("X-CSRF-Token", "Fetch");
+
+					//string Apiname = serviceUrl + "GetIndividualProfileDetailsSet(nesIndividualId=" + DebugDataSingleton.Instance.NesIndividualID + ")";
+					string Apiname = serviceUrl;
+					var response = await httpclient.GetAsync(Apiname);
+					returnVal = new ServiceResult<ProfileBatchDetail>();
+					if (response.StatusCode == System.Net.HttpStatusCode.OK)
+					{
+						var content = await response.Content.ReadAsStringAsync();
+
+						// all success
+						//var getIndApplicationresponse = JsonConvert.DeserializeObject<ProfileBatchDetail>(content);
+						returnVal.IsSuccess = true;
+						//returnVal.Result = getIndApplicationresponse;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+
+						GetResponseHeaders(response.Headers);
+					}
+					else
+					{
+						returnVal.IsSuccess = false;
+						returnVal.Result = null;
+						returnVal.StatusCode = Convert.ToString(Convert.ToInt32(response.StatusCode));
+					}
+					return returnVal;
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
+
+
+	}
+}

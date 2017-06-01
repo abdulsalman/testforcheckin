@@ -1,0 +1,829 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Pillar</name>
+    </assembly>
+    <members>
+        <member name="T:Pillar.BindableBehavior`1">
+             <summary>
+             This base behavior class is aware of the binding context of its associated view,
+             so that when the view's binding context changes, the behavior binding context will be the same.
+             </summary>
+             <typeparam name="T">The type of the objects with which this <see cref="T:Xamarin.Forms.Behavior" /> can be associated.</typeparam>
+            </member>
+        <member name="P:Pillar.BindableBehavior`1.AssociatedObject">
+             <summary>
+             The associated Xamarin.Forms visual element
+             </summary>
+            </member>
+        <member name="M:Pillar.BindableBehavior`1.OnAttachedTo(`0)">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.BindableBehavior`1.OnDetachingFrom(`0)">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.BindableBehavior`1.OnBindingContextChanged">
+             <summary>
+             Track any changes of the view's binding context
+             </summary>
+            </member>
+        <member name="T:Pillar.EventToCommandBehavior">
+             <summary>
+             This behavior allow you to bind any event on any View to an <see cref="T:System.Windows.Input.ICommand" />.
+             Typically, this element is used in XAML to connect the attached element
+             to a command located in a ViewModel. This trigger can only be attached
+             to a View or a class deriving from View.
+             </summary>
+            </member>
+        <member name="P:Pillar.EventToCommandBehavior.EventName">
+             <summary>
+             The name of the View event to bind.
+             </summary>
+            </member>
+        <member name="P:Pillar.EventToCommandBehavior.Command">
+             <summary>
+             The command to execute.
+             </summary>
+            </member>
+        <member name="P:Pillar.EventToCommandBehavior.CommandParameter">
+             <summary>
+             The command parameter.
+             </summary>
+            </member>
+        <member name="P:Pillar.EventToCommandBehavior.EventArgsConverter">
+             <summary>
+             Gets or sets a converter used to convert the EventArgs.
+             By default, the EventArgs are passed to the command if CommandParameter
+             if not null or EventArgs.Empty.
+             </summary>
+            </member>
+        <member name="P:Pillar.EventToCommandBehavior.EventArgsConverterParameter">
+             <summary>
+             Gets or sets a parameters for the converter used to convert the EventArgs.
+             </summary>
+            </member>
+        <member name="T:Pillar.PillarBootstrapper">
+             <summary>
+             This is where you configure, register and bind your ViewModels and Views.
+             </summary>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.#ctor(Xamarin.Forms.Application)">
+             <summary>
+             Initialize an instance of the class <see cref="T:Pillar.PillarBootstrapper" />.
+             </summary>
+             <param name="app">The Xamarin.Forms application</param>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.Run">
+             <summary>
+             Call this method to start your application.
+             Show the first page configured with the <see cref="M:Pillar.PillarBootstrapper.GetFirstPage(Pillar.IViewFactory)" /> method.
+             </summary>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.GetContainer">
+             <summary>
+             Creates the dependendy injection container used in the whole application.
+             Override this method to create your own container decorator.
+             </summary>
+             <returns></returns>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.RegisterAllDependencies(Pillar.IContainerAdapter)">
+             <summary>
+             You can register your dependencies by overriding this method.
+             Don't forget to call base.ConfigureContainer(builder) to register
+             the dependencies of this library.
+             </summary>
+             <param name="container">Used to register dependencies</param>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.RegisterDependencies(Pillar.IContainerAdapter)">
+             <summary>
+             Implement this method to register your dependencies.
+             </summary>
+             <param name="container">The dependency container</param>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.BindViewModelsToViews(Pillar.IViewFactory)">
+             <summary>
+             Implement this method to bind each View type to a ViewModel type.
+             </summary>
+             <param name="viewFactory">The View factory</param>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.ConfigureApplication(Pillar.IContainerAdapter)">
+             <summary>
+             Implement this method to configure your application when it starts.
+             For exemple, you can retrieve the view factory from the container,
+             and then retrieve a page and set it as MainPage
+             (you will need a reference to your Application instance).
+             </summary>
+             <param name="container">The dependency container</param>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.GetFirstPage(Pillar.IViewFactory)">
+             <summary>
+             Implement this method to return the first page that will be shown to the user
+             </summary>
+            </member>
+        <member name="M:Pillar.PillarBootstrapper.GetMasterPage(Pillar.IViewFactory)">
+             <summary>
+             Override this method if you want to use a MasterDetailsPage wrapper in your application
+             </summary>
+            </member>
+        <member name="T:Pillar.PillarModule">
+             <summary>
+             Class that help register all the dependencies needed in this library.
+             </summary>
+            </member>
+        <member name="T:Pillar.PillarNavigationPage">
+             <summary>
+             Custom navigation page that call Pillar's navigator to pop back when
+             the back button is pressed. Navigation events will be triggered.
+             </summary>
+             <seealso cref="T:Pillar.INavigationAware" />
+            </member>
+        <member name="T:Pillar.BooleanConverter`1">
+             <summary>
+             Provides an abstract type converter to convert
+             boolean objects to and from a generic type.
+             </summary>
+             <typeparam name="T">Type of the items to convert to and from the boolean objects.</typeparam>
+            </member>
+        <member name="P:Pillar.BooleanConverter`1.TrueObject">
+             <summary>
+             Generic object to return when the value to convert is true.
+             </summary>
+            </member>
+        <member name="P:Pillar.BooleanConverter`1.FalseObject">
+             <summary>
+             Generic object to return when the value to convert is false.
+             </summary>
+            </member>
+        <member name="T:Pillar.ItemTappedEventArgsConverter">
+             <summary>
+             Converts a ItemTappedEventArgs event to its Item.
+             Generally, the Item is the BindingContext of the tapped item.
+             </summary>
+            </member>
+        <member name="T:Pillar.InvalidBindableException">
+             <summary>
+             Thrown when an invalid bindable object has been passed to a callback
+             </summary>
+            </member>
+        <member name="M:Pillar.InvalidBindableException.#ctor">
+             <summary>
+             Hide any possible default constructor
+             Redundant I know, but it costs nothing
+             and communicates the design intent to
+             other developers.
+             </summary>
+            </member>
+        <member name="M:Pillar.InvalidBindableException.#ctor(Xamarin.Forms.BindableObject,System.Type,System.String)">
+             <summary>
+             Constructs the exception and passes a meaningful
+             message to the base Exception
+             </summary>
+             <param name="bindable">The bindable object that was passed</param>
+             <param name="expected">The expected type</param>
+             <param name="name">The calling methods name, uses [CallerMemberName]</param>
+            </member>
+        <member name="P:Pillar.InvalidBindableException.IncorrectBindableObject">
+             <summary>
+             The bindable object that was passed
+             </summary>
+            </member>
+        <member name="P:Pillar.InvalidBindableException.ExpectedType">
+             <summary>
+             The expected type of the bindable object
+             </summary>
+            </member>
+        <member name="T:Pillar.InvalidVisualObjectException">
+             <summary>
+             Thrown when datatemplate inflates to an object 
+             that is neither a <see cref="T:Xamarin.Forms.View" /> object nor a
+             <see cref="T:Xamarin.Forms.ViewCell" /> object
+             </summary>
+            </member>
+        <member name="M:Pillar.InvalidVisualObjectException.#ctor">
+             <summary>
+             Hide any possible default constructor
+             Redundant I know, but it costs nothing
+             and communicates the design intent to
+             other developers.
+             </summary>
+            </member>
+        <member name="M:Pillar.InvalidVisualObjectException.#ctor(System.Type,System.String)">
+             <summary>
+             Constructs the exception and passes a meaningful
+             message to the base Exception
+             </summary>
+             <param name="inflatedtype">The actual type the datatemplate inflated to.</param>
+             <param name="name">The calling methods name, uses [CallerMemberName]</param>
+            </member>
+        <member name="P:Pillar.InvalidVisualObjectException.InflatedType">
+             <summary>
+             The actual type the datatemplate inflated to.
+             </summary>
+            </member>
+        <member name="P:Pillar.InvalidVisualObjectException.MemberName">
+             <summary>
+             The MemberName the exception occured in.
+             </summary>
+            </member>
+        <member name="T:Pillar.NoDataTemplateMatchException">
+             <summary>
+             exception thrown when a template cannot
+             be found for a supplied type
+             </summary>
+            </member>
+        <member name="M:Pillar.NoDataTemplateMatchException.#ctor">
+             <summary>
+             Hide any possible default constructor
+             Redundant I know, but it costs nothing
+             and communicates the design intent to
+             other developers.
+             </summary>
+            </member>
+        <member name="M:Pillar.NoDataTemplateMatchException.#ctor(System.Type,System.Collections.Generic.List{System.Type})">
+             <summary>
+             Constructs the exception and passses a meaningful
+             message to the base Exception
+             </summary>
+             <param name="tomatch">The type that a match was attempted for</param>
+             <param name="candidates">All types examined during the match process</param>
+            </member>
+        <member name="P:Pillar.NoDataTemplateMatchException.AttemptedMatch">
+             <summary>
+             The type that a match was attempted for
+             </summary>
+            </member>
+        <member name="P:Pillar.NoDataTemplateMatchException.TypesExamined">
+             <summary>
+             A list of all types that were examined
+             </summary>
+            </member>
+        <member name="P:Pillar.NoDataTemplateMatchException.TypeNamesExamined">
+             <summary>
+             A List of the names of all examined types (Simple name only)
+             </summary>
+            </member>
+        <member name="M:Pillar.IViewFactory.Register``2">
+             <summary>
+             Bind a class type that implement <see cref="T:Pillar.IViewModel" /> to a <see cref="T:Xamarin.Forms.Page" /> type for later retrieval.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <typeparam name="TView">The page bound to the view model</typeparam>
+            </member>
+        <member name="M:Pillar.IViewFactory.Resolve``1(System.Action{``0})">
+             <summary>
+             Retrieve the page bound to a specific class type that implement <see cref="T:Pillar.IViewModel" />.
+             Also set the resolved view model as the binding context of the resolved page.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <param name="setStateAction">An action that will be executed on the resolved view model</param>
+             <returns>The resolved page</returns>
+            </member>
+        <member name="M:Pillar.IViewFactory.Resolve``1(``0@,System.Action{``0})">
+             <summary>
+             Retrieve the page bound to a specific class type that implement <see cref="T:Pillar.IViewModel" />
+             and return also the resolved instance of the view model as an out argument.
+             Also set the resolved view model as the binding context of the resolved page.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <param name="viewModel">The resolved view model</param>
+             <param name="setStateAction">An action that will be executed on the resolved view model</param>
+             <returns>The resolved page</returns>
+            </member>
+        <member name="M:Pillar.IViewFactory.Resolve``1(``0)">
+             <summary>
+             Retrieve the page bound to the class type of the passed <see cref="T:Pillar.IViewModel" /> instance.
+             Also set the view model instance as the binding context of the resolved page.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <param name="viewModel">The view model instance</param>
+             <returns>The resolved page</returns>
+            </member>
+        <member name="M:Pillar.ViewFactory.Register``2">
+             <summary>
+             Bind a class type that implement <see cref="T:Pillar.IViewModel" /> to a <see cref="T:Xamarin.Forms.Page" /> type for later retrieval.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <typeparam name="TView">The page bound to the view model</typeparam>
+            </member>
+        <member name="M:Pillar.ViewFactory.Resolve``1(System.Action{``0})">
+             <summary>
+             Retrieve the page bound to a specific class type that implement <see cref="T:Pillar.IViewModel" />.
+             Also set the resolved view model as the binding context of the resolved page.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <param name="setStateAction">An action that will be executed on the resolved view model</param>
+             <returns>
+             The resolved page
+             </returns>
+            </member>
+        <member name="M:Pillar.ViewFactory.Resolve``1(``0@,System.Action{``0})">
+             <summary>
+             Retrieve the page bound to a specific class type that implement <see cref="T:Pillar.IViewModel" />
+             and return also the resolved instance of the view model as an out argument.
+             Also set the resolved view model as the binding context of the resolved page.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <param name="viewModel">The resolved view model</param>
+             <param name="setStateAction">An action that will be executed on the resolved view model</param>
+             <returns>
+             The resolved page
+             </returns>
+            </member>
+        <member name="M:Pillar.ViewFactory.Resolve``1(``0)">
+             <summary>
+             Retrieve the page bound to the class type of the passed <see cref="T:Pillar.IViewModel" /> instance.
+             Also set the view model instance as the binding context of the resolved page.
+             </summary>
+             <typeparam name="TViewModel">The type of class that implement IViewModel</typeparam>
+             <param name="viewModel">The view model instance</param>
+             <returns>
+             The resolved page
+             </returns>
+            </member>
+        <member name="T:Pillar.ContainerAdapterExtensions">
+             <summary>
+             Add generic functionnalities to the IOC container adapter
+             </summary>
+            </member>
+        <member name="T:Pillar.IContainerAdapter">
+             <summary>
+             Depedency injection registration and resolving abstraction
+             </summary>
+            </member>
+        <member name="T:Pillar.IDialogProvider">
+             <summary>
+             Displays popups or actionsheet on any page.
+             </summary>
+            </member>
+        <member name="M:Pillar.IDialogProvider.DisplayAlert(System.String,System.String,System.String)">
+             <summary>
+             Displays an alert popup with a cancel button
+             </summary>
+             <param name="title">The title of the popup</param>
+             <param name="message">The message of the popup</param>
+             <param name="cancel">The text of the cancel button</param>
+             <returns>An awaitable Task that need to be awaited</returns>
+            </member>
+        <member name="M:Pillar.IDialogProvider.DisplayAlert(System.String,System.String,System.String,System.String)">
+             <summary>
+             Displays the alert with a OK button and a cancel button
+             </summary>
+             <param name="title">The title of the popup</param>
+             <param name="message">The message of the popup</param>
+             <param name="accept">The text of the OK button</param>
+             <param name="cancel">The text of the cancel button</param>
+             <returns>An awaitable Task that need to be awaited. True means that the OK button was pressed.</returns>
+            </member>
+        <member name="M:Pillar.IDialogProvider.DisplayActionSheet(System.String,System.String,System.String,System.String[])">
+             <summary>
+             Displays a native platform action sheet, allowing the application user to choose from several buttons.
+             </summary>
+             <returns>An awaitable Task that displays an action sheet and returns the Text of the button pressed by the user.</returns>
+            </member>
+        <member name="T:Pillar.INavigationAware">
+             <summary>
+             Provides navigation events
+             </summary>
+            </member>
+        <member name="M:Pillar.INavigationAware.ViewEntering">
+             <summary>
+             Method called before that the associated view is pushed on the navigation stack
+             </summary>
+            </member>
+        <member name="M:Pillar.INavigationAware.ViewEntered">
+             <summary>
+             Method called after that the associated view is pushed on the navigation stack
+             </summary>
+            </member>
+        <member name="M:Pillar.INavigationAware.ViewLeaving">
+             <summary>
+             Method called before that the associated view is poped from the navigation stack
+             </summary>
+            </member>
+        <member name="M:Pillar.INavigationAware.ViewLeaved">
+             <summary>
+             Method called after that the associated view is poped from the navigation stack
+             </summary>
+            </member>
+        <member name="T:Pillar.IPage">
+             <summary>
+             Page abstraction that allow us to always get the current singular Page
+             (not MasterDetailPage or NavigationPage).
+             </summary>
+             <seealso cref="T:Pillar.IDialogProvider" />
+            </member>
+        <member name="P:Pillar.IPage.Navigation">
+             <summary>
+             The current navigation object
+             </summary>
+            </member>
+        <member name="T:Pillar.INavigator">
+             <summary>
+             Provides a ViewModel-based navigation. You need to bind each
+             ViewModel type to a View type in a <see cref="T:Pillar.PillarBootstrapper" /> based class.
+             </summary>
+            </member>
+        <member name="M:Pillar.INavigator.PopAsync">
+             <summary>
+             Asynchronously go back to the previous Page.
+             </summary>
+             <returns>The ViewModel bound to the previous Page</returns>
+            </member>
+        <member name="M:Pillar.INavigator.PopModalAsync">
+             <summary>
+             Asynchronously dismiss the current modal page.
+             </summary>
+             <returns>The ViewModel bound to the Page where the modal were push</returns>
+            </member>
+        <member name="M:Pillar.INavigator.PopToRootAsync">
+             <summary>
+             Asynchronously go back to the first Page opened.
+             </summary>
+             <returns>The ViewModel associated to the first Page</returns>
+            </member>
+        <member name="M:Pillar.INavigator.PushAsync``1(System.Action{``0})">
+             <summary>
+             Asynchronously go to the Page associated to a ViewModel type.
+             The instance of the TViewModel type will be resolved with the dependency container.
+             </summary>
+             <typeparam name="TViewModel">The type of the ViewModel</typeparam>
+             <param name="setStateAction">A callback to apply to the ViewModel. Can be used to pass data.</param>
+             <returns>The instance of the resolved ViewModel</returns>
+            </member>
+        <member name="M:Pillar.INavigator.PushAsync``1(``0)">
+             <summary>
+             Asynchronously go to a Page associated to a ViewModel type.
+             </summary>
+             <typeparam name="TViewModel">The type of the ViewModel</typeparam>
+             <param name="viewModel">The ViewModel instance</param>
+             <returns>The same ViewModel instance</returns>
+            </member>
+        <member name="M:Pillar.INavigator.PushModalAsync``1(System.Action{``0})">
+             <summary>
+             Asynchronously open a modal Page associated to a ViewModel type.
+             The instance of the TViewModel type will be resolved with the dependency container.
+             </summary>
+             <typeparam name="TViewModel">The type of the ViewModel</typeparam>
+             <param name="setStateAction">A callback to apply to the ViewModel. Can be used to pass data.</param>
+             <returns>The instance of the resolved ViewModel</returns>
+            </member>
+        <member name="M:Pillar.INavigator.PushModalAsync``1(``0)">
+             <summary>
+             Asynchronously open a modal Page associated to a ViewModel type.
+             </summary>
+             <typeparam name="TViewModel">The type of the ViewModel</typeparam>
+             <param name="viewModel">The view model instance</param>
+             <returns></returns>
+            </member>
+        <member name="T:Pillar.NavigationExtensions">
+             <summary>
+             Extensions methods to access current or previous view in the navigation stack
+             </summary>
+            </member>
+        <member name="M:Pillar.NavigationExtensions.GetCurrentView(Xamarin.Forms.INavigation)">
+             <summary>
+             Get the currently displayed view (page)
+             </summary>
+            </member>
+        <member name="M:Pillar.NavigationExtensions.GetCurrentViewModel(Xamarin.Forms.INavigation)">
+             <summary>
+             Get the currently displayed view model, if it is an IViewModel
+             </summary>
+            </member>
+        <member name="M:Pillar.NavigationExtensions.GetPreviousView(Xamarin.Forms.INavigation)">
+             <summary>
+             Get the view that was displayed before the current one, if it exists
+             </summary>
+            </member>
+        <member name="M:Pillar.NavigationExtensions.GetPreviousViewModel(Xamarin.Forms.INavigation)">
+             <summary>
+             Get the view model that was displayed before the current one, if it exists and is an IViewModel
+             </summary>
+            </member>
+        <member name="T:Pillar.Navigator">
+             <summary>
+             The implementation of the ViewModel-based navigation.
+             Uses the Xamarin Forms navigation system <see cref="T:Xamarin.Forms.INavigation" />.
+             Please inject the interface inside your ViewModel to navigate between pages.
+             </summary>
+             <seealso cref="T:Pillar.INavigator" />
+            </member>
+        <member name="F:Pillar.Navigator._page">
+             <summary>
+             We use a page abstraction to get the underlying navigation system
+             </summary>
+            </member>
+        <member name="F:Pillar.Navigator._viewFactory">
+             <summary>
+             Factory used to get any Page associated to a ViewModel
+             </summary>
+            </member>
+        <member name="M:Pillar.Navigator.#ctor(Pillar.IPage,Pillar.IViewFactory)">
+             <summary>
+             Initializes an instance of the class <see cref="T:Pillar.Navigator" />.
+             </summary>
+             <param name="page">A way to access the current displayed page</param>
+             <param name="viewFactory">A view factory that creates pages base on a viewModel type</param>
+            </member>
+        <member name="M:Pillar.Navigator.PopAsync">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.Navigator.PopModalAsync">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.Navigator.PopToRootAsync">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.Navigator.PushAsync``1(System.Action{``0})">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.Navigator.PushAsync``1(``0)">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.Navigator.PushModalAsync``1(System.Action{``0})">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.Navigator.PushModalAsync``1(``0)">
+             <inheritdoc />
+            </member>
+        <member name="T:Pillar.IViewModel">
+             <summary>
+             A ViewModel abstraction implemented in <see cref="T:Pillar.PillarViewModelBase" />
+             </summary>
+             <seealso cref="T:Pillar.INavigationAware" />
+            </member>
+        <member name="P:Pillar.IViewModel.Title">
+             <summary>
+             Represents the page Title.
+             It's up to you to bind this property to a Page title.
+             </summary>
+            </member>
+        <member name="P:Pillar.IViewModel.NoHistory">
+             <summary>
+             If true, the associated Page will not exists in the navigation stack.
+             A good example is a login screen, once you are logged in and on a different page,
+             if you press the back button you won't return to the login screen.
+             </summary>
+            </member>
+        <member name="T:Pillar.PillarViewModelBase">
+             <summary>
+             The preffered ViewModel class of every ViewModel which can be bound to a View
+             in the app bootstrapping configuration.
+             It already contains some useful observable properties.
+             </summary>
+             <seealso cref="T:Pillar.ObservableObject" />
+             <seealso cref="T:Pillar.IViewModel" />
+            </member>
+        <member name="P:Pillar.PillarViewModelBase.Title">
+             <summary>
+             Represents the page Title.
+             It's up to you to bind this property to a Page title.
+             </summary>
+            </member>
+        <member name="P:Pillar.PillarViewModelBase.NoHistory">
+             <summary>
+             If true, the associated Page will not exists in the navigation stack.
+             A good example is a login screen, once you are logged in and on a different page,
+             if you press the back button you won't return to the login screen.
+             </summary>
+            </member>
+        <member name="P:Pillar.PillarViewModelBase.IsBusy">
+             <summary>
+             Indicates that a long running or background process is running.
+             You might want to use this with a BooleanConverter to show / hide controls during the process.
+             </summary>
+            </member>
+        <member name="M:Pillar.PillarViewModelBase.ViewEntering">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.PillarViewModelBase.ViewEntered">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.PillarViewModelBase.ViewLeaving">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.PillarViewModelBase.ViewLeaved">
+             <inheritdoc />
+            </member>
+        <member name="T:Pillar.BindablePicker">
+             <summary>
+             An extension of the Picker with new features:
+             - ItemsSource, which can be an observable collection
+             - DisplayMemberPath to control which property will be shown to the user
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.#ctor">
+             <summary>
+             Initializes a new instance of the <see cref="T:Pillar.BindablePicker" /> class.
+             </summary>
+            </member>
+        <member name="P:Pillar.BindablePicker.ItemsSource">
+             <summary>
+             Gets or sets the items source.
+             </summary>
+            </member>
+        <member name="P:Pillar.BindablePicker.SelectedItem">
+             <summary>
+             Gets or sets the selected item.
+             </summary>
+            </member>
+        <member name="P:Pillar.BindablePicker.DisplayMemberPath">
+             <summary>
+             Gets or sets the display member path.
+             The value of the property for each item of the item source should be unique.
+             If not set, the ToString value of each item will be used.
+             When the DisplayMemberPath is modified, the UI is refreshed.
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.ItemsSourcePropertyChanged(Xamarin.Forms.BindableObject,System.Object,System.Object)">
+             <summary>
+             A new collection is bound
+             </summary>
+             <param name="bindable">The BindablePicker</param>
+             <param name="oldValues">The old collection</param>
+             <param name="newValues">The new collection</param>
+            </member>
+        <member name="M:Pillar.BindablePicker.ItemsSourceChanged(System.Collections.IEnumerable,System.Collections.IEnumerable)">
+             <summary>
+             Handler that assign a new collection to the picker.
+             If the collection is observable, we attach (or detach) an event handler on CollectionChanged.
+             </summary>
+             <param name="oldValues">The old collection</param>
+             <param name="newValues">The new collection</param>
+            </member>
+        <member name="M:Pillar.BindablePicker.NewValueObservableCollectionChanged(System.Object,System.Collections.Specialized.NotifyCollectionChangedEventArgs)">
+             <summary>
+             Handle the modification of items of the bounded collection
+             (addition, retrieval, move, reset, replace)
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.AddItems(System.Collections.IEnumerable,System.Int32)">
+             <summary>
+             Add the new items to the picker items
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.RemoveItems(System.Collections.IEnumerable)">
+             <summary>
+             Remove items from the picker items
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.OnSelectedIndexChanged(System.Object,System.EventArgs)">
+             <summary>
+             The selected index has changed, change the selected item accordingly
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.SelectedItemPropertyChanged(Xamarin.Forms.BindableObject,System.Object,System.Object)">
+             <summary>
+             The selected item has changed, change the selected index accordingly
+             </summary>
+             <param name="bindable">The picker</param>
+             <param name="oldValue">The old selected item</param>
+             <param name="newValue">The new selected item</param>
+            </member>
+        <member name="M:Pillar.BindablePicker.GetPropertyValueString(System.Object,System.String)">
+             <summary>
+             Gets the string property value of an object using the property name.
+             If the property name is missing, it will return ToString.
+             </summary>
+            </member>
+        <member name="M:Pillar.BindablePicker.RefreshItemsValuesAfterDisplayMemberPathChanged">
+             <summary>
+             Refresh the display values of the picker accordingly to the DisplayMemberPath
+             </summary>
+            </member>
+        <member name="T:Pillar.DataTemplateCollection">
+             <summary>
+             Collection class of IDataTemplateWrapper
+             Enables xaml definitions of collections.
+             </summary>
+            </member>
+        <member name="T:Pillar.DataTemplateWrapper`1">
+             <summary>
+             Wrapper for a DataTemplate.
+             Unfortunately the default constructor for DataTemplate is internal
+             so I had to wrap the DataTemplate instead of inheriting it.
+             </summary>
+             <typeparam name="T">The object type that this DataTemplateWrapper matches</typeparam>
+            </member>
+        <member name="T:Pillar.IDataTemplateWrapper">
+             <summary>
+             Interface to enable DataTemplateCollection to hold
+             typesafe instances of DataTemplateWrapper
+             </summary>
+            </member>
+        <member name="T:Pillar.PageProxy">
+             <summary>
+             Page abstration that allows us to get the current navigation object,
+             display alerts and action sheets on the current top page
+             </summary>
+            </member>
+        <member name="M:Pillar.PageProxy.#ctor(System.Func{Xamarin.Forms.Page})">
+             <summary>
+             Constructor of the class.
+             </summary>
+             <param name="pageResolver">Provides access to the current top page</param>
+            </member>
+        <member name="M:Pillar.PageProxy.DisplayAlert(System.String,System.String,System.String)">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.PageProxy.DisplayAlert(System.String,System.String,System.String,System.String)">
+             <inheritdoc />
+            </member>
+        <member name="M:Pillar.PageProxy.DisplayActionSheet(System.String,System.String,System.String,System.String[])">
+             <inheritdoc />
+            </member>
+        <member name="P:Pillar.PageProxy.Navigation">
+             <inheritdoc />
+            </member>
+        <member name="T:Pillar.TemplateSelector">
+             <summary>
+             
+             </summary>
+             <seealso cref="T:Xamarin.Forms.BindableObject" />
+            </member>
+        <member name="M:Pillar.TemplateSelector.#ctor">
+             <summary>
+             Initialize the TemplateCollections so that each 
+             instance gets it's own collection
+             </summary>
+            </member>
+        <member name="M:Pillar.TemplateSelector.TemplatesChanged(Xamarin.Forms.BindableObject,System.Object,System.Object)">
+             <summary>
+              Clears the cache when the set of templates change
+             </summary>
+             <param name="bo"></param>
+             <param name="oldval"></param>
+             <param name="newval"></param>
+            </member>
+        <member name="M:Pillar.TemplateSelector.TemplateSetChanged(System.Object,System.Collections.Specialized.NotifyCollectionChangedEventArgs)">
+             <summary>
+             Clear the cache on any template set change
+             If needed this could be optimized to care about the specific
+             change but I doubt it would be worthwhile.
+             </summary>
+             <param name="sender"></param>
+             <param name="e"></param>
+            </member>
+        <member name="P:Pillar.TemplateSelector.Cache">
+             <summary>
+             Private cache of matched types with datatemplates
+             The cache is reset on any change to <see cref="P:Pillar.TemplateSelector.Templates" />
+             </summary>
+            </member>
+        <member name="P:Pillar.TemplateSelector.ExceptionOnNoMatch">
+             <summary>
+             Bindable property that allows the user to 
+             determine if a <see cref="T:Pillar.NoDataTemplateMatchException" /> is thrown when 
+             there is no matching template found
+             </summary>
+            </member>
+        <member name="P:Pillar.TemplateSelector.Templates">
+             <summary>
+             The collection of DataTemplates
+             </summary>
+            </member>
+        <member name="P:Pillar.TemplateSelector.SelectorFunction">
+             <summary>
+             A user supplied function of type
+             <code>Func<typeparamname name="Type"></typeparamname>,<typeparamname name="DataTemplate"></typeparamname></code>
+             If this function has been supplied it is always called first in the match 
+             process.
+             </summary>
+            </member>
+        <member name="M:Pillar.TemplateSelector.TemplateFor(System.Type)">
+             <summary>
+             Matches a type with a datatemplate
+             Order of matching=&gt;
+                 SelectorFunction, 
+                 Cache, 
+                 SpecificTypeMatch,
+                 InterfaceMatch,
+                 BaseTypeMatch 
+                 DefaultTempalte
+             </summary>
+             <param name="type">Type object type that needs a datatemplate</param>
+             <returns>The DataTemplate from the WrappedDataTemplates Collection that closest matches 
+             the type paramater.</returns>
+             <exception cref="T:Pillar.NoDataTemplateMatchException"></exception>Thrown if there is no datatemplate that matches the supplied type
+            </member>
+        <member name="M:Pillar.TemplateSelector.TemplateForImpl(System.Type,System.Collections.Generic.List{System.Type})">
+             <summary>
+             Interal implementation of <see cref="M:Pillar.TemplateSelector.TemplateFor(System.Type)" />.
+             </summary>
+             <param name="type">The type to match on</param>
+             <param name="examined">A list of all types examined during the matching process</param>
+             <returns>A DataTemplate or null</returns>
+            </member>
+        <member name="M:Pillar.TemplateSelector.ViewFor(System.Object)">
+             <summary>
+             Finds a template for the type of the passed in item (<code>item.GetType()</code>)
+             and creates the content and sets the Binding context of the View
+             Currently the root of the DataTemplate must be a ViewCell.
+             </summary>
+             <param name="item">The item to instantiate a DataTemplate for</param>
+             <returns>a View with it's binding context set</returns>
+             <exception cref="T:Pillar.InvalidVisualObjectException"></exception>Thrown when the matched datatemplate inflates to an object not derived from either 
+             <see cref="T:Xamarin.Forms.View" /> or <see cref="T:Xamarin.Forms.ViewCell" />
+            </member>
+    </members>
+</doc>
